@@ -18,15 +18,23 @@ import (
 func apiExec(w http.ResponseWriter, r *http.Request) {
 	lib.SetCors(&w)
 	var (
-		cmdStr = r.URL.Query().Get(lib.KEY_CMD)
-		argStr = r.URL.Query().Get(lib.KEY_ARG)
+		cmdStr string
+		argStr string
+		req    lib.Dict
 		cmd    *exec.Cmd
 		buf    []byte
 		err    error
 	)
 
+	if req, err = lib.ReceiveDict(r.Body); err != nil {
+		lib.LogError(os.Stderr, "main.apiExec", err)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	cmdStr = req[lib.KEY_CMD]
+	argStr = req[lib.KEY_ARG]
 	cmd = exec.Command(cmdStr, argStr)
-	cmd.Stdin = r.Body
 
 	if buf, err = cmd.Output(); err != nil {
 		lib.LogError(os.Stderr, "main.apiExec", err)
