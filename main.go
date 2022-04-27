@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/Atlas-Compute-Platform/lib"
 )
@@ -18,42 +19,45 @@ import (
 func apiExec(w http.ResponseWriter, r *http.Request) {
 	lib.SetCors(&w)
 	var (
-		cmdStr string
-		argStr string
-		req    lib.Dict
-		cmd    *exec.Cmd
-		buf    []byte
-		err    error
+		req     lib.Dict
+		buf     []byte
+		ok      bool
+		cmd     *exec.Cmd
+		cmdStr  string
+		argStr  string
+		argList []string
+		stdStr  string
+		err     error
 	)
 
 	if req, err = lib.ReceiveDict(r.Body); err != nil {
-		lib.LogError(os.Stderr, "main.apiExec", err)
-		fmt.Fprint(w, err)
+		lib.LogError(w, "main.apiExec", err)
 		return
 	}
 
 	cmdStr = req[lib.KEY_CMD]
 	argStr = req[lib.KEY_ARG]
-	cmd = exec.Command(cmdStr, argStr)
+	argList = strings.Fields(argStr)
+	cmd = exec.Command(cmdStr, argList...)
 
-	if buf, err = cmd.Output(); err != nil {
-		lib.LogError(os.Stderr, "main.apiExec", err)
-		fmt.Fprint(w, err)
-		return
+	if stdStr, ok = req["std"]; ok {
+		cmd.Stdin = strings.NewReader(stdStr)
 	}
 
+	if buf, err = cmd.Output(); err != nil {
+		lib.LogError(w, "main.apiExec", err)
+		lib.LogError(os.Stderr, "main.apiExec", err)
+		return
+	}
 	fmt.Fprint(w, string(buf))
 }
 
-func usage() {
-	fmt.Fprintf(os.Stderr, "Atlas Compute Service %s\n", lib.VERS)
-	flag.PrintDefaults()
-	os.Exit(1)
-}
-
 func main() {
+	lib.SvcName = "Atlas Compute Service"
+	lib.SvcVers = "1.0"
+
 	var netAddr = flag.String("p", lib.PORT, "Specify port")
-	flag.Usage = usage
+	flag.Usage = lib.Usage
 	flag.Parse()
 
 	http.HandleFunc("/ping", lib.ApiPing)
