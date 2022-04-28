@@ -26,7 +26,6 @@ func apiExec(w http.ResponseWriter, r *http.Request) {
 		cmdStr  string
 		argStr  string
 		argList []string
-		stdStr  string
 		err     error
 	)
 
@@ -40,8 +39,8 @@ func apiExec(w http.ResponseWriter, r *http.Request) {
 	argList = strings.Fields(argStr)
 	cmd = exec.Command(cmdStr, argList...)
 
-	if stdStr, ok = req["std"]; ok {
-		cmd.Stdin = strings.NewReader(stdStr)
+	if argStr, ok = req[lib.KEY_STDIN]; ok {
+		cmd.Stdin = strings.NewReader(argStr)
 	}
 
 	if buf, err = cmd.Output(); err != nil {
