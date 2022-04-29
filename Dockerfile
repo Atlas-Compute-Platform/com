@@ -1,3 +1,4 @@
+# Atlas Dockerfile
 FROM alpine:latest
 RUN apk add go
 COPY ./com /usr/local/bin/com
