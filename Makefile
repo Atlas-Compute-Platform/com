@@ -1,5 +1,5 @@
 # Atlas Makefile
-imageName = atcom
+imageName = thedevtop/atcom:latest
 help:
 	@echo 'build: Build exectuable'
 	@echo 'clean: Remove exectuable'
